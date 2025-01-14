@@ -164,8 +164,12 @@ class ThePornDBScenesAgent(Agent.Movies):
                 genres.append(tag['name'])
 
         metadata.genres.clear()
-        
-        for genre in genres:
+
+        for genresearch in genres:
+            skip = False
+            genre==genresearch.replace('"', '').strip()
+            log.debug('[TPDB Agent] process genre for: ' + genre)
+
             for genreskip in DatabaseGenres.GenresSkip:
                 if genre.lower() == genreskip.lower():
                     log.debug('[TPDB Agent] Ignore genre: "%s"' % genre)
@@ -174,19 +178,18 @@ class ThePornDBScenesAgent(Agent.Movies):
 
             if not skip:
                 for genrepartialskip in DatabaseGenres.GenresPartialSkip:
-                    if genrepartialskip.lower() in genres.lower():
+                    if genrepartialskip.lower() == genre.lower():
                         log.debug('[TPDB Agent] Ignore genre: "%s"' % genre)
                         skip = True
                         break
 
-            found = False
             if not skip:
                 for genrereplace, aliases in DatabaseGenres.GenresReplace.items():
-                    if genre.lower() == genrereplace.lower() or genre.lower in map(str.lower, aliases):
-                        found = True
+                    if genre.lower() == genrereplace.lower() or genre.lower() in map(str.lower, aliases):
                         log.debug('[TPDB Agent] Replacing genre: "%s" by "%s"' % genre,genrereplace)
                         genre = genrereplace
                         break
+            if not skip:    
                 log.debug('[TPDB Agent] Adding Genre: "%s"' % genrereplace)
                 metadata.genres.add(genre)
 
