@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-
+import DatabaseGenres
 import base64
 from dateutil.parser import parse
 
@@ -164,9 +164,31 @@ class ThePornDBScenesAgent(Agent.Movies):
                 genres.append(tag['name'])
 
         metadata.genres.clear()
+        
         for genre in genres:
-            log.debug('[TPDB Agent] Adding Genre: "%s"' % genre)
-            metadata.genres.add(genre)
+            for genreskip in DatabaseGenres.GenresSkip:
+                if genre.lower() == genreskip.lower():
+                    log.debug('[TPDB Agent] Ignore genre: "%s"' % genre)
+                    skip = True
+                    break
+
+            if not skip:
+                for genrepartialskip in DatabaseGenres.GenresPartialSkip:
+                    if genrepartialskip.lower() in genres.lower():
+                        log.debug('[TPDB Agent] Ignore genre: "%s"' % genre)
+                        skip = True
+                        break
+
+            found = False
+            if not skip:
+                for genrereplace, aliases in DatabaseGenres.GenresReplace.items():
+                    if genre.lower() == genrereplace.lower() or genre.lower in map(str.lower, aliases):
+                        found = True
+                        log.debug('[TPDB Agent] Replacing genre: "%s" by "%s"' % genre,genrereplace)
+                        genre = genrereplace
+                        break
+                log.debug('[TPDB Agent] Adding Genre: "%s"' % genrereplace)
+                metadata.genres.add(genre)
 
         if Prefs['create_all_tag_collection_tags']:
             for genre in genres:
